@@ -1,0 +1,43 @@
+**/__pycache__/**
+
+**.xlsx
+**.csv
+
+# skip credential file
+**/access_data.py
+**/send_status_access.py
+**- Kopie.*
+
+
+# skip all temporary and old files and directories
+temp*.py
+tmp*.py
+**/temp/**
+**/tmp/**
+**/old*.py
+**/old_files/**
+
+# skip log files and directory
+**/*.log
+**/*.csv
+
+
+htmlcov/**
+source/**
+
+make.bat
+Makefile
+m.bat
+
+.pytest_cache/**
+*.pyproj
+.vs/**
+*.sln
+.coverage**
+**/.spyproject
+.pylint**
+
+
+# special files
+solar/datacheck.py
+ee.pdf
