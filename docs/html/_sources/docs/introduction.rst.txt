@@ -16,6 +16,10 @@ If all conditions are met car charging is started if car conditions are met (at 
 
 The application avoids excessive on/off switching and car polling.
 
+The full python code is on  github_.
+
+.. _github: https://github.com/fhag/solar/
+
 Solar installation
 ++++++++++++++++++
 
