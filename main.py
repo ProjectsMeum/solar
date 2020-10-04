@@ -2,7 +2,7 @@
 """
 Created on Sun Oct 20 08:49:35 2019
 
-@author: annet
+@author: GFI
 """
 import logging
 from solar.charge import ChargeEV
@@ -15,8 +15,7 @@ logger.addHandler(FILEHANDLER)
 FILTER = Filter(NAME)
 logger.addFilter(FILTER)
 
-
-__version__ = '0.1.8'
+__version__ = '1.0.0'
 
 if __name__ == '__main__':
     print(f'main v{__version__}')
