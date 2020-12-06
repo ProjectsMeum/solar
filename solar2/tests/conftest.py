@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 ''' test all functions '''
+print('conftest.py ', __package__, __name__)
 import os
 import pytest
 import types
@@ -13,7 +14,7 @@ from ..charge import __version__ as chargeversion
 from ..definitions.pvdataclasses import PVStatus
 from .tests_log import logger
 
-__version__ = '0.1.56'
+__version__ = '1.0.1'
 
 EMAIL, PW, VIN, HOME = 'test', 'test', '123', (12, 34)
 

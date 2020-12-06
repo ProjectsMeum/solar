@@ -1,17 +1,39 @@
 # -*- coding: utf-8 -*-
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#
 """
 Module containing different dataclasses with some default values.
 Default values can be adapted to specific requirements.
 
 """
+import os
+import asyncio
+import json
+import logging
+from functools import cached_property
 from dataclasses import dataclass, field
 from collections import deque
 from datetime import datetime, timedelta
 from .access_data import HOME, E3DC_IP
 
-__version__ = '0.1.38'
+__version__ = '1.0.2'
 print(f'pvdataclasses.py v{__version__}')
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 @dataclass(frozen=False)
 class PVStatus():
@@ -62,13 +84,16 @@ class Values():
 
 
 @dataclass(frozen=False)
-class ChargeDefaults():
+class ChargeConfig():
     '''Values and variables for system charging'''
 
-    _defaults_path: str = 'solar/definitions/'
+    _defaults_path: str = 'solar2/definitions/'
     _defaults_file: str = 'newdefaults.json'
     _fname: str = 'PV2_%Y_%m_%d.csv'
-    _path: str = 'solar/data/'
+    _path: str = 'solar2/data/'
+    _st_mtime: float = 0
+    _check_update_time: int = 10
+    keep_alive: bool = False
     _log_to_file: bool = True
     soc_minimum_start: float = 20
     soc_minimum_stop: float = 20
@@ -82,6 +107,56 @@ class ChargeDefaults():
     check_internet_timeout = 300  # in seconds
     e3dc_time_last_connection: float = 0
     e3dc_error_minimum_time: float = 15 * 60  # in seconds
+
+    __version__: str = '0'
+
+    def __post_init__(self):
+        try:
+            loop = asyncio.get_running_loop()
+            assert loop.is_running()
+        except RuntimeError:
+            logger.info('No running eventloop')
+        else:
+            self.keep_alive = True
+            logger.info('ChargeConfig.check_updates started')
+            task = asyncio.create_task(self.check_updates(),
+                                       name='DefaultsValuesUpdates')
+
+
+    @cached_property
+    def fname(self):
+        fname = ''.join([self._defaults_path, self._defaults_file])
+        return os.path.normpath(fname)
+
+    async def check_updates(self):
+        while self.keep_alive:
+            self._update_default_values()
+            await asyncio.sleep(self.check_intervall)
+
+    def _update_default_values(self) -> None:
+        '''
+        Read updated values if available
+        '''
+        try:
+            assert os.stat(self.fname).st_mtime != self._st_mtime
+            print('assert ok')
+            self._st_mtime = os.stat(self.fname).st_mtime
+            with open(self.fname, 'rb') as file:
+                new_values = json.loads(file.read())
+            # update charge defaults
+            charge_keys = set(self.__dict__.keys()) & set(new_values.keys())
+            for key in charge_keys:
+                setattr(self, key, new_values[key])
+        except (FileNotFoundError, json.JSONDecodeError):
+            logger.warning('FileNotFoundError: %s', fname)
+            print('FileNotFound')
+        except AssertionError as err:
+            print('unchanged', err)
+            pass # file not changed
+        except Exception as err:
+            print('critical')
+            logger.critical(err, exc_info=True)
+            raise
 
 
 @dataclass(frozen=False)
